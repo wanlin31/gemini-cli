@@ -11,19 +11,26 @@ import {
   ToolConfirmationOutcome,
   ToolMcpConfirmationDetails,
 } from './tools.js';
-import { CallableTool, Part, FunctionCall, Schema } from '@google/genai';
+import {
+  CallableTool,
+  Part,
+  FunctionCall,
+  FunctionDeclaration,
+  Type,
+} from '@google/genai';
 
 type ToolParams = Record<string, unknown>;
 
 export class DiscoveredMCPTool extends BaseTool<ToolParams, ToolResult> {
   private static readonly allowlist: Set<string> = new Set();
+  readonly parametersJsonSchema: unknown;
 
   constructor(
     private readonly mcpTool: CallableTool,
     readonly serverName: string,
     readonly name: string,
     readonly description: string,
-    readonly parameterSchema: Schema,
+    readonly parameterSchemaJson: unknown,
     readonly serverToolName: string,
     readonly timeout?: number,
     readonly trust?: boolean,
@@ -32,10 +39,22 @@ export class DiscoveredMCPTool extends BaseTool<ToolParams, ToolResult> {
       name,
       `${serverToolName} (${serverName} MCP Server)`,
       description,
-      parameterSchema,
+      { type: Type.OBJECT }, // this is a dummy Schema for MCP, will be removed when construct the FunctionDeclaration
       true, // isOutputMarkdown
       false, // canUpdateOutput
     );
+    this.parametersJsonSchema = parameterSchemaJson;
+  }
+
+  /**
+   * Overrides the base schema to parametersJsonSchema to build FunctionDeclaration
+   */
+  override get schema(): FunctionDeclaration {
+    return {
+      name: this.name,
+      description: this.description,
+      parametersJsonSchema: this.parametersJsonSchema,
+    };
   }
 
   async shouldConfirmExecute(

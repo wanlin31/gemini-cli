@@ -18,8 +18,8 @@ import {
 import { parse } from 'shell-quote';
 import { MCPServerConfig } from '../config/config.js';
 import { DiscoveredMCPTool } from './mcp-tool.js';
-import { FunctionDeclaration, Type, mcpToTool } from '@google/genai';
-import { sanitizeParameters, ToolRegistry } from './tool-registry.js';
+import { FunctionDeclaration, mcpToTool } from '@google/genai';
+import { ToolRegistry } from './tool-registry.js';
 
 export const MCP_DEFAULT_TIMEOUT_MSEC = 10 * 60 * 1000; // default to 10 minutes
 
@@ -261,15 +261,13 @@ export async function discoverTools(
 
       const toolNameForModel = generateValidName(funcDecl, mcpServerName);
 
-      sanitizeParameters(funcDecl.parameters);
-
       discoveredTools.push(
         new DiscoveredMCPTool(
           mcpCallableTool,
           mcpServerName,
           toolNameForModel,
           funcDecl.description ?? '',
-          funcDecl.parameters ?? { type: Type.OBJECT, properties: {} },
+          funcDecl.parametersJsonSchema ?? { type: 'object', properties: {} },
           funcDecl.name!,
           mcpServerConfig.timeout ?? MCP_DEFAULT_TIMEOUT_MSEC,
           mcpServerConfig.trust,
