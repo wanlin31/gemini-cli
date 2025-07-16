@@ -23,7 +23,6 @@ type ToolParams = Record<string, unknown>;
 
 export class DiscoveredMCPTool extends BaseTool<ToolParams, ToolResult> {
   private static readonly allowlist: Set<string> = new Set();
-  readonly parametersJsonSchema: unknown;
 
   constructor(
     private readonly mcpTool: CallableTool,
@@ -39,21 +38,21 @@ export class DiscoveredMCPTool extends BaseTool<ToolParams, ToolResult> {
       name,
       `${serverToolName} (${serverName} MCP Server)`,
       description,
-      { type: Type.OBJECT }, // this is a dummy Schema for MCP, will be removed when construct the FunctionDeclaration
+      { type: Type.OBJECT }, // this is a dummy Schema for MCP, will be not be used to construct the FunctionDeclaration
       true, // isOutputMarkdown
       false, // canUpdateOutput
     );
-    this.parametersJsonSchema = parameterSchemaJson;
   }
 
   /**
-   * Overrides the base schema to parametersJsonSchema to build FunctionDeclaration
+   * Overrides the base schema to use parametersJsonSchema when building
+   * FunctionDeclaration
    */
   override get schema(): FunctionDeclaration {
     return {
       name: this.name,
       description: this.description,
-      parametersJsonSchema: this.parametersJsonSchema,
+      parametersJsonSchema: this.parameterSchemaJson,
     };
   }
 
